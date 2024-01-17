@@ -6,7 +6,7 @@ ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 let mousePos = {x: 0, y: 0};
 let mouseHeld = false;
-particlepos = [];
+let particlepos = [];
 
 function getMouseCoords(e)
 {
@@ -16,19 +16,20 @@ function getMouseCoords(e)
 
 onmousemove = ((e) => {
     coords = getMouseCoords(e)
-    mousePos.x = Math.round(coords.x/10)*10
+    mousePos.x = Math.round(coords.x/10)*10;
     mousePos.y = Math.round(coords.y/10)*10;
 });
 
 function updateStatus()
 {
+    particlepos.sort((a, b) => a.y < b.y);
     for(let i = 0; i < particlepos.length; i++)
     {
-        freeze = 0;
+        if (!particlepos[i].active) continue;
         if (particlepos[i].y >= canvas.height - 10)
         {
             particlepos[i].y = canvas.height - 10
-            freeze = 1;
+            particlepos[i].active = 0;
         } 
         else for (let j = 0; j < particlepos.length; j++)
         {
@@ -64,10 +65,10 @@ function updateStatus()
                     particlepos[i].x = xvalues[1];
                     break;
                 }
-                else freeze = 1;
+                else particlepos[i].active = 0;
             }
         }
-        if (!freeze) particlepos[i].y += 10;
+        if (particlepos[i].active) particlepos[i].y += 10;
     }
 }
 
@@ -81,13 +82,13 @@ onmouseup = (() => {
 
 
 onMouseHeld = (() => {
-    position = {x: mousePos.x, y: mousePos.y};
+    position = {x: mousePos.x, y: mousePos.y, active: 1};
 
     for (let i = 0; i < particlepos.length; i++)
     {
         if (particlepos[i].x === position.x && particlepos[i].y === position.y) return;
     }
-
+    
     particlepos.push(position);
 });
 
