@@ -6,7 +6,21 @@ ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 let mousePos = {x: 0, y: 0};
 let mouseHeld = false;
-let particlepos = [];
+let drawRock = false;
+let erase = false;
+
+let grid = [];
+
+for (let i = 0; i < canvas.width; i += 10)
+{
+    grid[i/10] = [];
+    for (let j = 0; j < canvas.height; j += 10)
+    {
+        grid[i/10][j/10] = 0;
+    }
+}
+
+let nextgrid = [...grid];
 
 function getMouseCoords(e)
 {
@@ -16,60 +30,48 @@ function getMouseCoords(e)
 
 onmousemove = ((e) => {
     coords = getMouseCoords(e)
+    if (coords.x < 0 || coords.x > canvas.width - 10) return;
+    if (coords.y < 0 || coords.y > canvas.height - 10) return;
     mousePos.x = Math.round(coords.x/10)*10;
     mousePos.y = Math.round(coords.y/10)*10;
 });
 
-function updateStatus()
+function updateStatus(grid)
 {
-    particlepos.sort((a, b) => a.y < b.y);
-    for(let i = 0; i < particlepos.length; i++)
+    for(let i = grid[0].length - 1; i >= 0; i--)
     {
-        if (!particlepos[i].active) continue;
-        if (particlepos[i].y >= canvas.height - 10)
+        for (let j = grid.length - 1; j >= 0; j--)
         {
-            particlepos[i].y = canvas.height - 10
-            particlepos[i].active = 0;
-        } 
-        else for (let j = 0; j < particlepos.length; j++)
-        {
-            let xvalues = [particlepos[i].x-10, particlepos[i].x+10];
-            if (particlepos[i].y + 10 == particlepos[j].y && particlepos[i].x == particlepos[j].x)
+            if (grid[j][i] == 1)
             {
-                xvalues.sort(() => Math.random() - 0.5);
-                let passedloop = true;
-                for (let k = 0; k < particlepos.length; k++)
+                if (grid[j][i+1] == 0)
                 {
-                    if (particlepos[i].y + 10 == particlepos[k].y && xvalues[0] == particlepos[k].x)
+                    nextgrid[j][i+1] = 1;
+                    nextgrid[j][i] = 0;
+                }
+                else 
+                {
+                    if (j == 0) canditateTiles = [j+1, j+1];
+                    else if (j == grid.length - 1) canditateTiles = [j-1, j-1];
+                    else {
+                        canditateTiles = [j+1, j-1];
+                        canditateTiles.sort(() => Math.random() - 0.5);
+                    }
+                    if (grid[canditateTiles[0]][i+1] == 0)
                     {
-                        passedloop = false;
-                        break;
+                        nextgrid[canditateTiles[0]][i+1] = 1;
+                        nextgrid[j][i] = 0;
+                    }
+                    else if (grid[canditateTiles[1]][i+1] == 0)
+                    {
+                        nextgrid[canditateTiles[1]][i+1] = 1;
+                        nextgrid[j][i] = 0;
                     }
                 }
-                if (passedloop)
-                {
-                    particlepos[i].x = xvalues[0];
-                    break;
-                }
-                passedloop = true;
-                for (let k = 0; k < particlepos.length; k++)
-                {
-                    if (particlepos[i].y + 10 == particlepos[k].y && xvalues[1] == particlepos[k].x)
-                    {
-                        passedloop = false;
-                        break;
-                    }
-                }
-                if (passedloop)
-                {
-                    particlepos[i].x = xvalues[1];
-                    break;
-                }
-                else particlepos[i].active = 0;
             }
         }
-        if (particlepos[i].active) particlepos[i].y += 10;
     }
+    return nextgrid;
 }
 
 onmousedown = (() => {
@@ -84,34 +86,73 @@ onmouseup = (() => {
 onMouseHeld = (() => {
     position = {x: mousePos.x, y: mousePos.y, active: 1};
 
-    for (let i = 0; i < particlepos.length; i++)
-    {
-        if (particlepos[i].x === position.x && particlepos[i].y === position.y) return;
-    }
-    
-    particlepos.push(position);
+    if (erase) nextgrid[position.x/10][position.y/10] = 0;
+    else if (drawRock) nextgrid[position.x/10][position.y/10] = 2;
+    else nextgrid[position.x/10][position.y/10] = 1;
 });
 
 function drawFrame()
 {
     counter++;
+    if (counter >= 5)
+    {
+        grid = updateStatus(grid);
+        counter = 0;
+    }
     ctx.fillStyle = "#ADD8E6";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "blue";
     ctx.fillRect(mousePos.x, mousePos.y, 10, 10);
     if (mouseHeld) onMouseHeld();
-    if (counter >= 5)
+    for(let i = 0; i < grid.length; i++)
     {
-        updateStatus();
-        counter = 0;
-    }
-    for(let i = 0; i < particlepos.length; i++)
-    {
-        ctx.fillStyle = "yellow";
-        ctx.fillRect(particlepos[i].x, particlepos[i].y, 10, 10);
+        for (let j = 0; j < grid[0].length; j++)
+        {
+            if (grid[i][j] == 1)
+            {
+                ctx.fillStyle = "yellow";
+                ctx.fillRect(i*10, j*10, 10, 10);
+            }
+            else if (grid[i][j] == 2)
+            {
+                ctx.fillStyle = "gray";
+                ctx.fillRect(i*10, j*10, 10, 10);
+            }
+        }
     }
     requestAnimationFrame(drawFrame);
 }
+
+document.addEventListener(
+    "keydown",
+    (event) => {
+      const keyName = event.key;
+  
+      if (keyName === "Shift") {
+        drawRock = true;
+      }
+
+      if (keyName === "Control")
+      {
+        erase = true;
+      }
+    },
+);
+  
+  document.addEventListener(
+    "keyup",
+    (event) => {
+      const keyName = event.key;
+      if (keyName === "Shift") {
+        drawRock = false;
+      }
+      if (keyName === "Control")
+      {
+        erase = false;
+      }
+    },
+);
+
 
 let counter = 0;
 drawFrame();
