@@ -86,15 +86,27 @@ onmouseup = (() => {
 onMouseHeld = (() => {
     position = {x: mousePos.x, y: mousePos.y, active: 1};
 
-    if (erase) nextgrid[position.x/10][position.y/10] = 0;
+    if (erase)
+    {
+        if (position.x < canvas.width-10 && position.y < canvas.height-10)
+        {
+            nextgrid[position.x/10][position.y/10] = 0;
+            nextgrid[position.x/10][position.y/10+1] = 0;
+            nextgrid[position.x/10+1][position.y/10] = 0;
+            nextgrid[position.x/10+1][position.y/10+1] = 0;
+        }
+    } 
     else if (drawRock)
     {
-        nextgrid[position.x/10][position.y/10] = 2;
-        nextgrid[position.x/10][position.y/10+1] = 2;
-        nextgrid[position.x/10+1][position.y/10] = 2;
-        nextgrid[position.x/10+1][position.y/10+1] = 2;
+        if (position.x < canvas.width-10 && position.y < canvas.height-10)
+        {
+            nextgrid[position.x/10][position.y/10] = 2;
+            nextgrid[position.x/10][position.y/10+1] = 2;
+            nextgrid[position.x/10+1][position.y/10] = 2;
+            nextgrid[position.x/10+1][position.y/10+1] = 2;
+        }
     } 
-    else if (grid[position.x/10][position.y/10] != 2) nextgrid[position.x/10][position.y/10] = 1;
+    else if (grid[position.x/10][position.y/10] == 0) nextgrid[position.x/10][position.y/10] = 1;
 });
 
 function drawFrame()
@@ -107,19 +119,6 @@ function drawFrame()
     }
     ctx.fillStyle = "#ADD8E6";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    if (drawRock)
-    {
-        ctx.fillStyle = "red";
-        ctx.fillRect(mousePos.x, mousePos.y, 10, 10);
-        ctx.fillRect(mousePos.x, mousePos.y+10, 10, 10);
-        ctx.fillRect(mousePos.x+10, mousePos.y, 10, 10);
-        ctx.fillRect(mousePos.x+10, mousePos.y+10, 10, 10);
-    }
-    else
-    {
-        ctx.fillStyle = "blue";
-        ctx.fillRect(mousePos.x, mousePos.y, 10, 10);
-    }
     if (mouseHeld) onMouseHeld();
     for(let i = 0; i < grid.length; i++)
     {
@@ -137,13 +136,34 @@ function drawFrame()
             }
         }
     }
+    if (erase)
+    {
+        ctx.fillStyle = "red";
+        ctx.fillRect(mousePos.x, mousePos.y, 10, 10);
+        ctx.fillRect(mousePos.x, mousePos.y+10, 10, 10);
+        ctx.fillRect(mousePos.x+10, mousePos.y, 10, 10);
+        ctx.fillRect(mousePos.x+10, mousePos.y+10, 10, 10);
+    }
+    else if (drawRock)
+    {
+        ctx.fillStyle = "green";
+        ctx.fillRect(mousePos.x, mousePos.y, 10, 10);
+        ctx.fillRect(mousePos.x, mousePos.y+10, 10, 10);
+        ctx.fillRect(mousePos.x+10, mousePos.y, 10, 10);
+        ctx.fillRect(mousePos.x+10, mousePos.y+10, 10, 10);
+    }
+    else
+    {
+        ctx.fillStyle = "blue";
+        ctx.fillRect(mousePos.x, mousePos.y, 10, 10);
+    }
     requestAnimationFrame(drawFrame);
 }
 
 document.addEventListener(
     "keydown",
-    (event) => {
-      const keyName = event.key;
+    (event) => { 
+    const keyName = event.key;
   
       if (keyName === "Shift") {
         drawRock = true;
@@ -156,11 +176,12 @@ document.addEventListener(
     },
 );
   
-  document.addEventListener(
-    "keyup",
-    (event) => {
-      const keyName = event.key;
-      if (keyName === "Shift") {
+document.addEventListener(
+    "keyup", (event) => { 
+    const keyName = event.key;
+    
+      if (keyName === "Shift") 
+      {
         drawRock = false;
       }
       if (keyName === "Control")
