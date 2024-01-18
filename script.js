@@ -87,8 +87,14 @@ onMouseHeld = (() => {
     position = {x: mousePos.x, y: mousePos.y, active: 1};
 
     if (erase) nextgrid[position.x/10][position.y/10] = 0;
-    else if (drawRock) nextgrid[position.x/10][position.y/10] = 2;
-    else nextgrid[position.x/10][position.y/10] = 1;
+    else if (drawRock)
+    {
+        nextgrid[position.x/10][position.y/10] = 2;
+        nextgrid[position.x/10][position.y/10+1] = 2;
+        nextgrid[position.x/10+1][position.y/10] = 2;
+        nextgrid[position.x/10+1][position.y/10+1] = 2;
+    } 
+    else if (grid[position.x/10][position.y/10] != 2) nextgrid[position.x/10][position.y/10] = 1;
 });
 
 function drawFrame()
@@ -101,8 +107,19 @@ function drawFrame()
     }
     ctx.fillStyle = "#ADD8E6";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "blue";
-    ctx.fillRect(mousePos.x, mousePos.y, 10, 10);
+    if (drawRock)
+    {
+        ctx.fillStyle = "red";
+        ctx.fillRect(mousePos.x, mousePos.y, 10, 10);
+        ctx.fillRect(mousePos.x, mousePos.y+10, 10, 10);
+        ctx.fillRect(mousePos.x+10, mousePos.y, 10, 10);
+        ctx.fillRect(mousePos.x+10, mousePos.y+10, 10, 10);
+    }
+    else
+    {
+        ctx.fillStyle = "blue";
+        ctx.fillRect(mousePos.x, mousePos.y, 10, 10);
+    }
     if (mouseHeld) onMouseHeld();
     for(let i = 0; i < grid.length; i++)
     {
